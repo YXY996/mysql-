@@ -1,4 +1,4 @@
-mysql（更新中）
+mysql
 --如何在数据库服务器中创建我们的数据库
 create database test;
 use test
@@ -144,4 +144,83 @@ mysql> desc user10;
 | age   | int         | YES  |     | 10      |       |
 +-------+-------------+------+-----+---------+-------+
 3 rows in set (0.00 sec)
+insert into user10 (id,name)values(1,'zhangsan');
+//age 未赋值 所以age显示默认值
+mysql> select * from user10;
++------+----------+------+
+| id   | name     | age  |
++------+----------+------+
+|    1 | zhangsan |   10 |
++------+----------+------+
+1 row in set (0.00 sec)
+--外键约束
+--涉及到两个表 父表子表
+--主表 副表
+--班级
+create table classes(
+id int primary key,
+name varchar(20)
+);
+
+--学生表
+create table students(
+id int primary key,
+name varchar(20),
+class_id int,
+foreign key (class_id) references classes (id)
+);
+
+
+
+insert into classes values(1,'一班');
+insert into classes values(2,'二班');
+insert into classes values(3,'三班');
+insert into classes values(4,'四班');
+
+
+mysql> select * from classes;
++----+--------+
+| id | name   |
++----+--------+
+|  1 | 一班   |
+|  2 | 二班   |
+|  3 | 三班   |
+|  4 | 四班   |
++----+--------+
+4 rows in set (0.00 sec)
+--删除主表中的数据
+
+mysql> delete from classes where id=4;
+Query OK, 1 row affected (0.01 sec)
+
+mysql> select * from classes;
++----+--------+
+| id | name   |
++----+--------+
+|  1 | 一班   |
+|  2 | 二班   |
+|  3 | 三班   |
++----+--------+
+3 rows in set (0.00 sec)
+
+insert into students values(1001,'zhangsan',1);
+insert into students values(1002,'zhangsan',2);
+insert into students values(1003,'zhangsan',3);
+//因为刚才通过delete和删除了四班 所以只输入前三组数据
+insert into students values(1004,'zhangsan',4);
+//查看结果没有问题 classses父表中的班级数据被子表引用
+mysql> select * from students;
++------+----------+----------+
+| id   | name     | class_id |
++------+----------+----------+
+| 1001 | zhangsan |        1 |
+| 1002 | zhangsan |        2 |
+| 1003 | zhangsan |        3 |
++------+----------+----------+
+3 rows in set (0.00 sec)
+再次尝试删除主表数据
+
+mysql> delete from classes where id=3;
+ERROR 1451 (23000): Cannot delete or update a parent row: a foreign key constraint fails (`test`.`students`, CONSTRAINT `students_ibfk_1` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`))
+得到的结果是erro 说明当主表的记录被副表引用后，是不可以被删除的。但是被引用前可以随意删除
 
