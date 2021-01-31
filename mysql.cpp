@@ -1,4 +1,4 @@
-mysql
+mysql（更新中）
 --如何在数据库服务器中创建我们的数据库
 create database test;
 use test
