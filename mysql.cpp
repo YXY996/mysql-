@@ -545,6 +545,7 @@ mysql> select * from score where degree in(85,86,88);
 +------+-------+--------+
 
 --6  查询student表中“95301班”或性别为“女”的记录
+--or表示或者
 mysql> select * from student where class='95301' or'sex='女';
     '> select * from student where class='95031' or'sex='女';
 ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '女'
@@ -560,5 +561,339 @@ mysql> select * from student where class='95031' or sex='女';
 | 108 | 张全蛋    | 男  | 1975-02-10 | 95031 |
 | 109 | 赵铁柱    | 男  | 1974-06-03 | 95031 |
 +-----+-----------+-----+------------+-------+
+--7 以class降序查询student表的所有记录
+--升序 降序
+desc 降序
+asc  升序 （不写也默认升序）
+mysql> select *from student order by class desc;
++-----+-----------+-----+------------+-------+
+| no  | name      | sex | birthday   | class |
++-----+-----------+-----+------------+-------+
+| 101 | 曾华      | 男  | 1977-09-01 | 95033 |
+| 103 | 王丽      | 女  | 1976-01-23 | 95033 |
+| 104 | 李军      | 男  | 1976-02-20 | 95033 |
+| 107 | 王尼玛    | 男  | 1976-02-20 | 95033 |
+| 102 | 匡明      | 男  | 1975-10-02 | 95031 |
+| 105 | 王芳      | 女  | 1975-02-10 | 95031 |
+| 106 | 陆军      | 男  | 1974-06-03 | 95031 |
+| 108 | 张全蛋    | 男  | 1975-02-10 | 95031 |
+| 109 | 赵铁柱    | 男  | 1974-06-03 | 95031 |
++-----+-----------+-----+------------+-------+
+==8.以cno升序，degree降序查询score表的记录
+
+mysql> select * from score order by c_no asc, degree desc;
+//课程编号首先按照升序排列，同一课程编号内的score按照降序排列
++------+-------+--------+
+| s_no | c_no  | degree |
++------+-------+--------+
+| 103  | 3-105 |     92 |
+| 105  | 3-105 |     88 |
+| 109  | 3-105 |     76 |
+| 103  | 3-245 |     86 |
+| 105  | 3-245 |     75 |
+| 109  | 3-245 |     68 |
+| 103  | 6-166 |     85 |
+| 109  | 6-166 |     81 |
+| 105  | 6-166 |     79 |
++------+-------+--------+
+--9.查询‘95301’班级的人数
+--统计count
+
+mysql> select count(*)from student where class='95031';
++----------+
+| count(*) |
++----------+
+|        5 |
++----------+
+
+--10 查询score表中的最高分的学生学号和课程号
+
+--mysql> select s_no,c_no from score where degree=(select max(degree) from score);
+//按照括号内首先找出表中的最高分 select  max(degree) from score;
+然后来查询最高分的学生学号和课程号 select s_no,c_no score where degree =select  max(degree) from score;
+
++------+-------+
+| s_no | c_no  |
++------+-------+
+| 103  | 3-105 |
++------+-------+
+--第二种做法：排序
+首先将分数按升序或者降序排序，然后找出排在首位或者末尾的数据
+
+mysql> select s_no,c_no,degree from score order by degree;
++------+-------+--------+
+| s_no | c_no  | degree |
++------+-------+--------+
+| 109  | 3-245 |     68 |
+| 105  | 3-245 |     75 |
+| 109  | 3-105 |     76 |
+| 105  | 6-166 |     79 |
+| 109  | 6-166 |     81 |
+| 103  | 6-166 |     85 |
+| 103  | 3-245 |     86 |
+| 105  | 3-105 |     88 |
+| 103  | 3-105 |     92 |
+然后找出排在首位或者末尾的数据
+这里是通过desc找到从最后开始倒数的第一个数据
+limit 
+第一个数字表示从哪个位置开始
+第二个数字代表插入几组数据
+limit 0,1
+mysql> select s_no,c_no,degree from score order by degree desc limit 0,1;
++------+-------+--------+
+| s_no | c_no  | degree |
++------+-------+--------+
+| 103  | 3-105 |     92 |
++------+-------+--------+
+
+--11.查询每门课的平均成绩
+//查询有几门课程
+select * from course;
+--avg
+select avg(degree) from score where c_no='3-105';
+mysql> select avg(degree) from score where c_no='3-105';
+
++-------------+
+| avg(degree) |
++-------------+
+|     85.3333 |
++-------------+
+
+select avg(degree) from score where c_no='3-245';
+select avg(degree) from score where c_no='6-166';
+select avg(degree) from score where c_no='9-888';
+
+--能不能在一个sql语句中写呢？
+select c_no,avg(degree) from score group by c_no;
+
+mysql> select c_no,avg(degree) from score group by c_no;
++-------+-------------+
+| c_no  | avg(degree) |
++-------+-------------+
+| 3-105 |     85.3333 |
+| 3-245 |     76.3333 |
+| 6-166 |     81.6667 |
++-------+-------------+
+//这里尝试不通过课程编号进行分组，通过学生编号进行分组，这里求出的数值代表每名学生所有成绩的平均值.
+//因此这个语句主要取决于group by的后半部分
+mysql> select s_no,avg(degree) from score group by s_no;
+
++------+-------------+
+| s_no | avg(degree) |
++------+-------------+
+| 103  |     87.6667 |
+| 105  |     80.6667 |
+| 109  |     75.0000 |
+
+--12 查询score表中至少有两名学生选修的，并以3开头的课程的平均分数
+3%模糊查询 
+select c_no ,avg(degree),count(*)from score group by c_no
+having count(c_no)>=2 
+and c_no like '3%';
+
+mysql> select c_no ,avg(degree),count(*)from score group by c_no
+    -> having count(c_no)>=2 and c_no like '3%';
++-------+-------------+----------+
+| c_no  | avg(degree) | count(*) |
++-------+-------------+----------+
+| 3-105 |     85.3333 |        3 |
+| 3-245 |     76.3333 |        3 |
+--13 查询分数大于70 小于90的 s_no 列
+ 
+ select s_no,degree from score where degree>70 and degree<90;
+ select s_no,degree from score where degree between 70 and 90;
 
 
+ mysql> select s_no,degree from score where degree>70 and degree<90;
++------+--------+
+| s_no | degree |
++------+--------+
+| 103  |     86 |
+| 103  |     85 |
+| 105  |     88 |
+| 105  |     75 |
+| 105  |     79 |
+| 109  |     76 |
+| 109  |     81 |
++------+--------+
+--14 查询所有学生的sname 
+select no,name from student;
++-----+-----------+
+| no  | name      |
++-----+-----------+
+| 101 | 曾华      |
+| 102 | 匡明      |
+| 103 | 王丽      |
+| 104 | 李军      |
+| 105 | 王芳      |
+| 106 | 陆军      |
+| 107 | 王尼玛    |
+| 108 | 张全蛋    |
+| 109 | 赵铁柱    |
+
+select s_no,c_no ,degree from score;
+
+| s_no | c_no  | degree |
++------+-------+--------+
+| 103  | 3-105 |     92 |
+| 103  | 3-245 |     86 |
+| 103  | 6-166 |     85 |
+| 105  | 3-105 |     88 |
+| 105  | 3-245 |     75 |
+| 105  | 6-166 |     79 |
+| 109  | 3-105 |     76 |
+| 109  | 3-245 |     68 |
+| 109  | 6-166 |     81 |
++------+-------+--------+
+
+
+select name,no,degree from student,score where student.no=score.s_no;
++-----------+-----+--------+
+| name      | no  | degree |
++-----------+-----+--------+
+| 王丽      | 103 |     92 |
+| 王丽      | 103 |     86 |
+| 王丽      | 103 |     85 |
+| 王芳      | 105 |     88 |
+| 王芳      | 105 |     75 |
+| 王芳      | 105 |     79 |
+| 赵铁柱    | 109 |     76 |
+| 赵铁柱    | 109 |     68 |
+| 赵铁柱    | 109 |     81 |
++-----------+-----+--------+
+--15 查询所有学生的s_no,cname,和degree列
+首先分别查看score，course表格
+
+mysql> select c_no,s_no,degree from score;
++-------+------+--------+
+| c_no  | s_no | degree |
++-------+------+--------+
+| 3-105 | 103  |     92 |
+| 3-245 | 103  |     86 |
+| 6-166 | 103  |     85 |
+| 3-105 | 105  |     88 |
+| 3-245 | 105  |     75 |
+| 6-166 | 105  |     79 |
+| 3-105 | 109  |     76 |
+| 3-245 | 109  |     68 |
+| 6-166 | 109  |     81 |
++-------+------+--------+
+
+mysql> select no,name from course;
++-------+-----------------+
+| no    | name            |
++-------+-----------------+
+| 3-105 | 计算机导论      |
+| 3-245 | 操作系统        |
+| 6-166 | 数字电路        |
+| 9-888 | 高等数学        |
+
++-------+-----------------+
+制定新的表格包含no，name（来自course）和degree(score)
+增加条件（course里的课程编号与score里的c_no 相等）
+
+mysql> select no,name,degree from course,score where course.no=score.c_no;
++-------+-----------------+--------+
+| no    | name            | degree |
++-------+-----------------+--------+
+| 3-105 | 计算机导论      |     92 |
+| 3-105 | 计算机导论      |     88 |
+| 3-105 | 计算机导论      |     76 |
+| 3-245 | 操作系统        |     86 |
+| 3-245 | 操作系统        |     75 |
+| 3-245 | 操作系统        |     68 |
+| 6-166 | 数字电路        |     85 |
+| 6-166 | 数字电路        |     79 |
+| 6-166 | 数字电路        |     81 |
++-------+-----------------+--------+
+--16 查询所有学生的sname，cname和degree
+
+mysql> select name,name,degree from student,course,score where student.no=score.s_no and where course.no=score.c_no;
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'where course.no=score.c_no' at line 1
+
+!!我这里尝试按照视频中操作，但因为course和student里的name相同起了冲突
+这里按照之前操作数据表的方法 将student中的name改为sname！！
+mysql> alter table student drop name;
+Query OK, 0 rows affected (0.01 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> alter table student add sname varchar(20) first;
+Query OK, 0 rows affected (0.01 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+desc查看 发现更改成功！
+mysql> desc student;
++----------+-------------+------+-----+---------+-------+
+| Field    | Type        | Null | Key | Default | Extra |
++----------+-------------+------+-----+---------+-------+
+| sname    | varchar(20) | YES  |     | NULL    |       |
+| no       | varchar(20) | NO   | PRI | NULL    |       |
+| sex      | varchar(10) | NO   |     | NULL    |       |
+| birthday | date        | YES  |     | NULL    |       |
+| class    | varchar(20) | YES  |     | NULL    |       |
++----------+-------------+------+-----+---------+-------+
+
+select sname,name,degree from student,course,score where student.no=score.s_no and where course.no=score.c_no;
+这里再次尝试操作发现还是错误 检查得知虽然数据表中name改为sname
+但是sname中的数据为NULL空 所以需要通过对于数据进行操作 
+
++-----+-----------+
+| no  | name      |
++-----+-----------+
+| 101 | 曾华      |
+| 102 | 匡明      |
+| 103 | 王丽      |
+| 104 | 李军      |
+| 105 | 王芳      |
+| 106 | 陆军      |
+| 107 | 王尼玛    |
+| 108 | 张全蛋    |
+| 109 | 赵铁柱    |
+--更改数据
+UPDATE student SET sname = '曾华 ' where no = 101;
+UPDATE student SET sname = '匡明' where no = 102;
+UPDATE student SET sname = '王丽' where no = 103;
+UPDATE student SET sname = '李军' where no = 104;
+UPDATE student SET sname = '王芳' where no = 105;
+UPDATE student SET sname = '陆军' where no = 106;
+UPDATE student SET sname = '王尼玛' where no = 107;
+UPDATE student SET sname = '张全蛋' where no = 108;
+UPDATE student SET sname = '赵铁柱' where no = 109;
+
+
+mysql> select * from student;
++-------+-----+-----+------------+-------+
+| sname | no  | sex | birthday   | class |
++-------+-----+-----+------------+-------+
+| NULL  | 101 | 男  | 1977-09-01 | 95033 |
+| NULL  | 102 | 男  | 1975-10-02 | 95031 |
+| NULL  | 103 | 女  | 1976-01-23 | 95033 |
+| NULL  | 104 | 男  | 1976-02-20 | 95033 |
+| NULL  | 105 | 女  | 1975-02-10 | 95031 |
+| NULL  | 106 | 男  | 1974-06-03 | 95031 |
+| NULL  | 107 | 男  | 1976-02-20 | 95033 |
+| NULL  | 108 | 男  | 1975-02-10 | 95031 |
+| NULL  | 109 | 男  | 1974-06-03 | 95031 |
++-------+-----+-----+------------+-------+
+
+select sname,name,degree from student,course,score where student.no=score.s_no and course.no=score.c_no;
+成功！
+
+mysql> select sname,name,degree from student,course,score where student.no=score.s_no and course.no=score.c_no;
++-----------+-----------------+--------+
+| sname     | name            | degree |
++-----------+-----------------+--------+
+| 王丽      | 计算机导论      |     92 |
+| 王丽      | 操作系统        |     86 |
+| 王丽      | 数字电路        |     85 |
+| 王芳      | 计算机导论      |     88 |
+| 王芳      | 操作系统        |     75 |
+| 王芳      | 数字电路        |     79 |
+| 赵铁柱    | 计算机导论      |     76 |
+| 赵铁柱    | 操作系统        |     68 |
+| 赵铁柱    | 数字电路        |     81 |
++-----------+-----------------+--------+
+!!重点 数据操作指令多加练习
+前面更改数据表列名的方法很麻烦
+查找后发现可以直接修改列名的方法
+alter table student change sname name varchar(20);
+change oldname newname +数据类型
